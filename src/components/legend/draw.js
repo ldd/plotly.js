@@ -65,6 +65,19 @@ module.exports = function draw(gd) {
 
     var scrollBox = Lib.ensureSingle(legend, 'g', 'scrollbox');
 
+    var title = fullLayout.legend.title;
+    var titleEl = Lib.ensureSingle(scrollBox, 'text', 'legendtitle');
+    titleEl.attr('text-anchor',
+            title.position === 'top left' ? 'start' :
+            title.position === 'top right' ? 'end' : 'middle'
+        )
+        .classed('user-select-none', true)
+        .call(Drawing.font, title.font)
+        .text(title.text);
+    gd._fullLayout._legendTitleHeight = 0;
+    textLayout(titleEl, scrollBox, gd); // handle mathjax or multi-line text and compute title height
+    svgTextUtils.positionText(titleEl, 0, gd._fullLayout._legendTitleHeight);
+
     var scrollBar = Lib.ensureSingle(legend, 'rect', 'scrollbar', function(s) {
         s.attr(constants.scrollBarEnterAttrs)
          .call(Color.fill, constants.scrollBarColor);
@@ -121,7 +134,7 @@ module.exports = function draw(gd) {
             }
 
             // Set size and position of all the elements that make up a legend:
-            // legend, background and border, scroll box and scroll bar
+            // legend, background and border, scroll box and scroll bar as well as title
             Drawing.setTranslate(legend, lx, ly);
 
             // to be safe, remove previous listeners
@@ -375,18 +388,12 @@ function drawTexts(g, gd) {
 
     svgTextUtils.positionText(textEl, constants.textGap, 0);
 
-    function textLayout(s) {
-        svgTextUtils.convertToTspans(s, gd, function() {
-            computeTextDimensions(g, gd);
-        });
-    }
-
     if(isEditable) {
         textEl.call(svgTextUtils.makeEditable, {gd: gd, text: name})
-            .call(textLayout)
+            .call(textLayout, g, gd)
             .on('edit', function(newName) {
                 this.text(ensureLength(newName, maxNameLength))
-                    .call(textLayout);
+                    .call(textLayout, g, gd);
 
                 var fullInput = legendItem.trace._fullInput || {};
                 var update = {};
@@ -407,7 +414,7 @@ function drawTexts(g, gd) {
                 return Registry.call('_guiRestyle', gd, update, traceIndex);
             });
     } else {
-        textLayout(textEl);
+        textLayout(textEl, g, gd);
     }
 }
 
@@ -460,17 +467,24 @@ function setupTraceToggle(g, gd) {
     });
 }
 
+function textLayout(s, g, gd) {
+    svgTextUtils.convertToTspans(s, gd, function() {
+        computeTextDimensions(g, gd);
+    });
+}
+
 function computeTextDimensions(g, gd) {
     var legendItem = g.data()[0][0];
-
-    if(!legendItem.trace.showlegend) {
+    if(legendItem && !legendItem.trace.showlegend) {
         g.remove();
         return;
     }
 
     var mathjaxGroup = g.select('g[class*=math-group]');
     var mathjaxNode = mathjaxGroup.node();
-    var opts = gd._fullLayout.legend;
+    var opts = legendItem ?
+        gd._fullLayout.legend :
+        gd._fullLayout.legend.title;
     var lineHeight = opts.font.size * LINE_SPACING;
     var height, width;
 
@@ -495,9 +509,13 @@ function computeTextDimensions(g, gd) {
         svgTextUtils.positionText(text, constants.textGap, textY);
     }
 
-    legendItem.lineHeight = lineHeight;
-    legendItem.height = Math.max(height, 16) + 3;
-    legendItem.width = width;
+    if(legendItem) {
+        legendItem.lineHeight = lineHeight;
+        legendItem.height = Math.max(height, 16) + 3;
+        legendItem.width = width;
+    } else {
+        gd._fullLayout._legendTitleHeight = height;
+    }
 }
 
 /*
@@ -514,6 +532,7 @@ function computeLegendDimensions(gd, groups, traces) {
     var fullLayout = gd._fullLayout;
     var opts = fullLayout.legend;
     var gs = fullLayout._size;
+    var titleOffsetY = fullLayout._legendTitleHeight;
     var isVertical = helpers.isVertical(opts);
     var isGrouped = helpers.isGrouped(opts);
 
@@ -530,7 +549,7 @@ function computeLegendDimensions(gd, groups, traces) {
     // - if below/above plot area, give it the maximum potential margin-push value
     // - otherwise, extend the height of the plot area
     opts._maxHeight = Math.max(
-        (isBelowPlotArea || isAbovePlotArea) ? fullLayout.height / 2 : gs.h,
+        ((isBelowPlotArea || isAbovePlotArea) ? fullLayout.height / 2 : gs.h) - titleOffsetY,
         30
     );
 
@@ -634,7 +653,7 @@ function computeLegendDimensions(gd, groups, traces) {
                     maxItemHeightInRow = 0;
                 }
 
-                Drawing.setTranslate(this, bw + offsetX, itemGap + bw + h / 2 + offsetY);
+                Drawing.setTranslate(this, bw + offsetX, itemGap + bw + h / 2 + offsetY + titleOffsetY);
 
                 rowWidth = offsetX + w + itemGap;
                 offsetX += next;

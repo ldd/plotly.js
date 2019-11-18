@@ -116,4 +116,8 @@ module.exports = function legendDefaults(layoutIn, layoutOut, fullData) {
     coerce('yanchor', defaultYAnchor);
     coerce('valign');
     Lib.noneOrAll(containerIn, containerOut, ['x', 'y']);
+
+    coerce('title.text', layoutOut._dfltTitle.legend);
+    Lib.coerceFont(coerce, 'title.font', layoutOut.font);
+    coerce('title.position');
 };

@@ -12,6 +12,7 @@ module.exports = {
     moduleType: 'locale',
     name: 'en-US',
     dictionary: {
+        'Click to enter Legend title': 'Click to enter Legend title',
         'Click to enter Colorscale title': 'Click to enter Colorscale title'
     },
     format: {

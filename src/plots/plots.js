@@ -319,6 +319,7 @@ plots.supplyDefaults = function(gd, opts) {
         plot: _(gd, 'Click to enter Plot title'),
         x: _(gd, 'Click to enter X axis title'),
         y: _(gd, 'Click to enter Y axis title'),
+        legend: _(gd, 'Click to enter Legend title'),
         colorbar: _(gd, 'Click to enter Colorscale title'),
         annotation: _(gd, 'new text')
     };

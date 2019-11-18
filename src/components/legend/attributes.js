@@ -193,5 +193,32 @@ module.exports = {
             'Sets the vertical alignment of the symbols with respect to their associated text.',
         ].join(' ')
     },
+    title: {
+        text: {
+            valType: 'string',
+            role: 'info',
+            description: [
+                'Sets the title of the legend.'
+            ].join(' ')
+        },
+        font: fontAttrs({
+            description: [
+                'Sets this legend\'s title font.'
+            ].join(' ')
+        }),
+        position: {
+            valType: 'enumerated',
+            values: [
+                'top left', 'top center', 'top right'
+            ],
+            role: 'style',
+            dflt: 'top left',
+            description: [
+                'Determines the location of legend\'s title',
+                'with respect to the legend items.',
+            ].join(' ')
+        }
+    },
+
     editType: 'legend'
 };
