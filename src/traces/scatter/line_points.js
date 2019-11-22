@@ -18,7 +18,7 @@ var Lib = require('../../lib');
 var segmentsIntersect = Lib.segmentsIntersect;
 var constrain = Lib.constrain;
 var constants = require('./constants');
-
+var linearSimplifier = require('./decimator');
 
 module.exports = function linePoints(d, opts) {
     var xa = opts.xaxis;
@@ -350,6 +350,13 @@ module.exports = function linePoints(d, opts) {
 
             pts[pti++] = pt;
         }
+    }
+
+    if(linear && opts.simplify) {
+        for(i = 0; i < len; i++) {
+            addPt(getPt(i));
+        }
+        return [linearSimplifier(pts)];
     }
 
     // loop over ALL points in this trace
